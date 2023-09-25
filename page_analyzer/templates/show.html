@@ -28,6 +28,9 @@
             {% if message == 'Страница успешно добавлена' %}
             <div class="alert alert-success" role="alert">{{ message }}</div>
             {% endif %}
+            {% if message == 'Страница успешно проверена' %}
+            <div class="alert alert-success" role="alert">{{ message }}</div>
+            {% endif %}
             {% endfor %}
             {% endif %}
         {% endwith %}
@@ -61,7 +64,7 @@
   </div>
 
     <h2 class="mt-5 mb-3">Проверки</h2>
-    <form method="post" action="/urls/{{ id }}/checks">
+    <form method="post" action="{{ url_for('check_url', id=id) }}">
     <input type="submit" class="btn btn-primary" value="Запустить проверку">
     </form>
     
@@ -70,15 +73,20 @@
     <thead>
       <tr>
         <th>ID</th>
-        <th>Код ответа</th>
-        <th>h1</th>
-        <th>title</th>
-        <th>description</th>
+        <!-- <th>Код ответа</th> -->
+        <!-- <th>h1</th> -->
+        <!-- <th>title</th> -->
+        <!-- <th>description</th> -->
         <th>Дата создания</th>
       </tr>
     </thead>
-      <tbody>
-    
+    <tbody>
+      {% for item in check %}
+      <tr>
+        <td>{{ item[0] }}</td>
+        <td>{{ item[6] }}</td>
+      </tr>
+      {% endfor %}
     </tbody>
     </table>
   </div>

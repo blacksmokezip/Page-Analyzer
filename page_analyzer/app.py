@@ -19,6 +19,7 @@ def main_page():
         'index.html'
     )
 
+
 @app.post('/urls')
 def post_urls():
     url = request.form.to_dict()['url']
@@ -39,7 +40,8 @@ def post_urls():
     with conn.cursor() as cur:
         cur.execute(f"SELECT * FROM urls WHERE name='{url}'")
         if not cur.fetchall():
-            query = f"INSERT INTO urls (name, created_at) VALUES ('{url}', '{date.today()}')"
+            query = f"INSERT INTO urls (name, created_at)" \
+                    f" VALUES ('{url}', '{date.today()}')"
             cur.execute(query)
             conn.commit()
         else:
@@ -51,20 +53,25 @@ def post_urls():
         flash('Страница успешно добавлена')
         return redirect(url_for('url_id', id=cur.fetchone()[0]))
 
+
 @app.route('/urls/<int:id>')
 def url_id(id):
     conn = psycopg2.connect(DATABASE_URL)
 
     with conn.cursor() as cur:
         cur.execute(f"SELECT * FROM urls WHERE id={id}")
-        result = cur.fetchone()
+        url = cur.fetchone()
+        cur.execute(f"SELECT * FROM url_checks WHERE url_id={id}")
+        check = cur.fetchall()[::-1]
 
     return render_template(
         'show.html',
-        id=result[0],
-        name=result[1],
-        created_at=result[2],
+        id=url[0],
+        name=url[1],
+        created_at=url[2],
+        check=check,
     )
+
 
 @app.get('/urls')
 def get_urls():
@@ -73,17 +80,47 @@ def get_urls():
     with conn.cursor() as cur:
         cur.execute("SELECT * FROM urls")
         urls = cur.fetchall()[::-1]
+        query = 'SELECT url_id, MAX(b.created_at) AS last_tested_at' \
+                ' FROM urls a' \
+                ' INNER JOIN url_checks b ON a.id = b.url_id' \
+                ' GROUP BY url_id' \
+                ' ORDER BY url_id;'
+        cur.execute(query)
+        result = cur.fetchall()
+
+    checks = {}
+    for item in result:
+        checks[item[0]] = item[1]
 
     return render_template(
         'urls.html',
         urls=urls,
+        checks=checks,
     )
+
+
+@app.post('/urls/<int:id>/checks')
+def check_url(id):
+    conn = psycopg2.connect(DATABASE_URL)
+
+    with conn.cursor() as cur:
+        cur.execute(f"SELECT * FROM urls WHERE id={id}")
+        url = cur.fetchone()
+        query = f"INSERT INTO url_checks (url_id, created_at)" \
+                f" VALUES ('{url[0]}', '{date.today()}')"
+        cur.execute(query)
+        conn.commit()
+
+    flash('Страница успешно проверена')
+    return redirect(url_for('url_id', id=url[0]))
+
 
 def validate(url):
     if not url.startswith("http://") and not url.startswith("https://"):
         return 'Некорректный URL'
     if len(url) > 255:
         return 'URL превышает 255 символов'
+
 
 if __name__ == "__main__":
     app.run()
