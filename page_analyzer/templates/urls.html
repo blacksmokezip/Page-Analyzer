@@ -36,6 +36,7 @@
       <th>ID</th>
       <th>Имя</th>
       <th>Последняя проверка</th>
+      <th>Код ответа</th>
     </tr>
     </thead>
     <tbody>
@@ -43,7 +44,8 @@
     <tr>
         <td>{{url[0]}}</td>
         <td><a href="{{ url_for('url_id', id=url[0]) }}">{{ url[1] }}</a></td>
-        <td>{{ checks[url[0]] }}</td>
+        <td>{{ checks[url[0]][1] }}</td>
+        <td>{{ checks[url[0]][0] }}</td>
     </tr>
     {% endfor %}
     </tbody>

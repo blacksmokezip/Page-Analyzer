@@ -4,6 +4,7 @@ import psycopg2
 from dotenv import load_dotenv, find_dotenv
 from datetime import date
 from urllib.parse import urlparse
+import requests
 
 load_dotenv(find_dotenv())
 
@@ -80,7 +81,9 @@ def get_urls():
     with conn.cursor() as cur:
         cur.execute("SELECT * FROM urls")
         urls = cur.fetchall()[::-1]
-        query = 'SELECT url_id, MAX(b.created_at) AS last_tested_at' \
+        query = 'SELECT url_id,' \
+                ' MAX(b.status_code),' \
+                ' MAX(b.created_at) AS last_tested_at' \
                 ' FROM urls a' \
                 ' INNER JOIN url_checks b ON a.id = b.url_id' \
                 ' GROUP BY url_id' \
@@ -90,7 +93,10 @@ def get_urls():
 
     checks = {}
     for item in result:
-        checks[item[0]] = item[1]
+        checks[item[0]] = [item[1], item[2]]
+    for item in urls:
+        if item[0] not in checks:
+            checks[item[0]] = ['', '']
 
     return render_template(
         'urls.html',
@@ -106,8 +112,13 @@ def check_url(id):
     with conn.cursor() as cur:
         cur.execute(f"SELECT * FROM urls WHERE id={id}")
         url = cur.fetchone()
-        query = f"INSERT INTO url_checks (url_id, created_at)" \
-                f" VALUES ('{url[0]}', '{date.today()}')"
+        try:
+            r = requests.get(url[1])
+        except Exception:
+            flash('Произошла ошибка при проверке')
+            return redirect(url_for('url_id', id=url[0]))
+        query = f"INSERT INTO url_checks (url_id, status_code, created_at)" \
+                f" VALUES ('{url[0]}', {r.status_code}, '{date.today()}')"
         cur.execute(query)
         conn.commit()
 

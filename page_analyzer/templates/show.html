@@ -31,6 +31,9 @@
             {% if message == 'Страница успешно проверена' %}
             <div class="alert alert-success" role="alert">{{ message }}</div>
             {% endif %}
+            {% if message == 'Произошла ошибка при проверке' %}
+            <div class="alert alert-danger" role="alert">{{ message }}</div>
+            {% endif %}
             {% endfor %}
             {% endif %}
         {% endwith %}
@@ -73,7 +76,7 @@
     <thead>
       <tr>
         <th>ID</th>
-        <!-- <th>Код ответа</th> -->
+        <th>Код ответа</th>
         <!-- <th>h1</th> -->
         <!-- <th>title</th> -->
         <!-- <th>description</th> -->
@@ -84,6 +87,7 @@
       {% for item in check %}
       <tr>
         <td>{{ item[0] }}</td>
+        <td>{{ item[2] }}</td>
         <td>{{ item[6] }}</td>
       </tr>
       {% endfor %}
