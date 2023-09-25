@@ -5,6 +5,8 @@ from dotenv import load_dotenv, find_dotenv
 from datetime import date
 from urllib.parse import urlparse
 import requests
+from bs4 import BeautifulSoup
+
 
 load_dotenv(find_dotenv())
 
@@ -117,8 +119,34 @@ def check_url(id):
         except Exception:
             flash('Произошла ошибка при проверке')
             return redirect(url_for('url_id', id=url[0]))
-        query = f"INSERT INTO url_checks (url_id, status_code, created_at)" \
-                f" VALUES ('{url[0]}', {r.status_code}, '{date.today()}')"
+        soup = BeautifulSoup(r.text, 'lxml')
+        h1 = soup.find('h1')
+        title = soup.find('title')
+        meta_tag = soup.find('meta', {'name': 'description'})
+        if h1:
+            h1 = h1.text
+        else:
+            h1 = ''
+        if title:
+            title = title.text
+        else:
+            title = ''
+        if meta_tag:
+            content = meta_tag['content']
+        else:
+            content = ''
+        query = f"INSERT INTO url_checks (url_id," \
+                f" status_code," \
+                f" h1," \
+                f" title," \
+                f" description," \
+                f" created_at)" \
+                f" VALUES ('{url[0]}'," \
+                f" {r.status_code}," \
+                f" '{h1}'," \
+                f" '{title}'," \
+                f" '{content}'," \
+                f" '{date.today()}')"
         cur.execute(query)
         conn.commit()
 
