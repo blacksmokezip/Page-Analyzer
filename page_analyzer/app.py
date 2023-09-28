@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, flash, redirect, url_for
 import os
 import psycopg2
+from psycopg2 import sql
 from dotenv import load_dotenv, find_dotenv
 from datetime import date
 from urllib.parse import urlparse
@@ -41,18 +42,23 @@ def post_urls():
 
     conn = psycopg2.connect(DATABASE_URL)
     with conn.cursor() as cur:
-        cur.execute(f"SELECT * FROM urls WHERE name='{url}'")
+        cur.execute(sql.SQL('SELECT * FROM {} WHERE {}=%s')
+                    .format(sql.Identifier('urls'), sql.Identifier('name')),
+                    [url])
+        id = cur.fetchone()[0]
         if not cur.fetchall():
-            query = f"INSERT INTO urls (name, created_at)" \
-                    f" VALUES ('{url}', '{date.today()}')"
-            cur.execute(query)
+            cur.execute(sql.SQL("INSERT INTO {} ({}, {}) VALUES (%s, %s)")
+                        .format(sql.Identifier('urls'), sql.Identifier('name'),
+                                sql.Identifier('created_at')),
+                        [url, date.today()])
             conn.commit()
         else:
-            cur.execute(f"SELECT * FROM urls WHERE name='{url}'")
             flash('Страница уже существует')
-            return redirect(url_for('url_id', id=cur.fetchone()[0]))
+            return redirect(url_for('url_id', id=id))
 
-        cur.execute(f"SELECT * FROM urls WHERE name='{url}'")
+        cur.execute(sql.SQL('SELECT * FROM {} WHERE {}=%s')
+                    .format(sql.Identifier('urls'), sql.Identifier('name')),
+                    [url])
         flash('Страница успешно добавлена')
         return redirect(url_for('url_id', id=cur.fetchone()[0]))
 
@@ -62,9 +68,14 @@ def url_id(id):
     conn = psycopg2.connect(DATABASE_URL)
 
     with conn.cursor() as cur:
-        cur.execute(f"SELECT * FROM urls WHERE id={id}")
+        cur.execute(sql.SQL('SELECT * FROM {} WHERE {}=%s')
+                    .format(sql.Identifier('urls'), sql.Identifier('id')),
+                    [id])
         url = cur.fetchone()
-        cur.execute(f"SELECT * FROM url_checks WHERE url_id={id}")
+        cur.execute(sql.SQL('SELECT * FROM {} WHERE {}=%s')
+                    .format(sql.Identifier('url_checks'),
+                            sql.Identifier('url_id')),
+                    [id])
         check = cur.fetchall()[::-1]
 
     return render_template(
@@ -82,6 +93,8 @@ def get_urls():
 
     with conn.cursor() as cur:
         cur.execute("SELECT * FROM urls")
+        cur.execute(sql.SQL('SELECT * FROM {}')
+                    .format(sql.Identifier('urls')))
         urls = cur.fetchall()[::-1]
         query = 'SELECT url_id,' \
                 ' MAX(b.status_code),' \
@@ -112,7 +125,9 @@ def check_url(id):
     conn = psycopg2.connect(DATABASE_URL)
 
     with conn.cursor() as cur:
-        cur.execute(f"SELECT * FROM urls WHERE id={id}")
+        cur.execute(sql.SQL('SELECT * FROM {} WHERE {}=%s')
+                    .format(sql.Identifier('urls'), sql.Identifier('id')),
+                    [id])
         url = cur.fetchone()
         try:
             r = requests.get(url[1])
@@ -135,19 +150,18 @@ def check_url(id):
             content = meta_tag['content']
         else:
             content = ''
-        query = f"INSERT INTO url_checks (url_id," \
-                f" status_code," \
-                f" h1," \
-                f" title," \
-                f" description," \
-                f" created_at)" \
-                f" VALUES ('{url[0]}'," \
-                f" {r.status_code}," \
-                f" '{h1}'," \
-                f" '{title}'," \
-                f" '{content}'," \
-                f" '{date.today()}')"
-        cur.execute(query)
+        cur.execute(sql.SQL('INSERT INTO {} ({}, {}, {}, {}, {}, {})'
+                            'VALUES (%s, %s, %s, %s, %s, %s)')
+                    .format(sql.Identifier('url_checks'),
+                            sql.Identifier('url_id'),
+                            sql.Identifier('status_code'),
+                            sql.Identifier('h1'),
+                            sql.Identifier('title'),
+                            sql.Identifier('description'),
+                            sql.Identifier('created_at')),
+                    [url[0], r.status_code, h1,
+                     title, content,
+                     date.today()])
         conn.commit()
 
     flash('Страница успешно проверена')
