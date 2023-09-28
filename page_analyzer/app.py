@@ -45,7 +45,8 @@ def post_urls():
         cur.execute(sql.SQL('SELECT * FROM {} WHERE {}=%s')
                     .format(sql.Identifier('urls'), sql.Identifier('name')),
                     [url])
-        id = cur.fetchone()[0]
+        if cur.fetchone():
+            id = cur.fetchone()[0]
         if not cur.fetchall():
             cur.execute(sql.SQL("INSERT INTO {} ({}, {}) VALUES (%s, %s)")
                         .format(sql.Identifier('urls'), sql.Identifier('name'),
