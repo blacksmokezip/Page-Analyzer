@@ -46,17 +46,17 @@ def post_urls():
                     .format(sql.Identifier('urls'), sql.Identifier('name')),
                     [url])
         if cur.fetchone():
-            id = cur.fetchone()[0]
-        if not cur.fetchall():
+            cur.execute(sql.SQL('SELECT * FROM {} WHERE {}=%s')
+                        .format(sql.Identifier('urls'), sql.Identifier('name')),
+                        [url])
+            flash('Страница уже существует')
+            return redirect(url_for('url_id', id=cur.fetchone()[0]))
+        else:
             cur.execute(sql.SQL("INSERT INTO {} ({}, {}) VALUES (%s, %s)")
                         .format(sql.Identifier('urls'), sql.Identifier('name'),
                                 sql.Identifier('created_at')),
                         [url, date.today()])
             conn.commit()
-        else:
-            flash('Страница уже существует')
-            return redirect(url_for('url_id', id=id))
-
         cur.execute(sql.SQL('SELECT * FROM {} WHERE {}=%s')
                     .format(sql.Identifier('urls'), sql.Identifier('name')),
                     [url])
