@@ -7,6 +7,8 @@
 ### Page Analyzer
 Check websites for SEO suitability for free
 
+SEO suitability refers to the extent to which a website or web page is optimized for search engine rankings. It takes into consideration factors such as keyword usage, content quality, website structure, and backlinks. A website or web page with high SEO suitability is more likely to rank higher in search engine results pages, making it more visible and accessible to potential visitors.
+
 ___
 
 ### Link:
