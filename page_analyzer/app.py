@@ -38,7 +38,7 @@ def post_urls():
         ), 422
 
     url = urlparse(url)
-    url = f'{url.scheme}://{url.hostname}'
+    url = f'{url.scheme}://{url.netlock}'
 
     conn = psycopg2.connect(DATABASE_URL)
     with conn.cursor() as cur:
@@ -130,6 +130,7 @@ def check_url(id):
                     .format(sql.Identifier('urls'), sql.Identifier('id')),
                     [id])
         url = cur.fetchone()
+
         try:
             r = requests.get(url[1])
         except requests.exceptions.RequestException:
