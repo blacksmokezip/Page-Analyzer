@@ -130,7 +130,6 @@ def check_url(id):
                     .format(sql.Identifier('urls'), sql.Identifier('id')),
                     [id])
         url = cur.fetchone()
-
         try:
             r = requests.get(url[1])
         except requests.exceptions.RequestException:
