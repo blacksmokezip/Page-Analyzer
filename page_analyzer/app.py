@@ -38,7 +38,7 @@ def post_urls():
         ), 422
 
     url = urlparse(url)
-    url = f'{url.scheme}://{url.netlock}'
+    url = f'{url.scheme}://{url.netloc}'
 
     conn = psycopg2.connect(DATABASE_URL)
     with conn.cursor() as cur:
