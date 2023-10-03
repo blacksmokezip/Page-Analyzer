@@ -132,8 +132,9 @@ def check_url(id):
         url = cur.fetchone()
         try:
             r = requests.get(url[1])
+            r.raise_for_status()
         except requests.exceptions.RequestException:
-            flash('Произошла ошибка при проверке', 'warning')
+            flash('Произошла ошибка при проверке', 'danger')
             return redirect(url_for('url_id', id=url[0]))
         soup = BeautifulSoup(r.text, 'lxml')
         h1 = soup.find('h1')
